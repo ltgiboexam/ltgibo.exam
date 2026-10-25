@@ -815,29 +815,48 @@ const nrm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').repla
 const sug=t=>{let b=nrm(t).toLowerCase().replace(/_+/g,'_').replace(/^_|_$/g,'').slice(0,22);if(b.length<3)b='de_thi';return(b+'_'+(Math.random()*900+100|0)).slice(0,30)};
 const scGet=id=>ld().find(e=>e.id===id)||SCT[id];
 const scR=id=>{const e=$('#scx-'+id),x=scGet(id);if(e&&x)e.innerHTML=scUI(x)};
-function scUI(x){const n=LK(x.code).length;
- if(x.sc)return`<h3>${I('link',17)}Mã ngắn</h3><div class="scv"><span>is.gd/</span><b>${esc(x.sc)}</b></div><div class="acts"><button class="b p sm2" data-a="scc" data-id="${x.id}">${I('copy',16)}<span>Copy mã ngắn</span></button><button class="b sm2" data-a="scl" data-id="${x.id}">${I('link',16)}<span>Copy link ngắn</span></button></div><p class="mu">Học sinh gõ <b>${esc(x.sc)}</b> ở mục Giải đề, hoặc bấm thẳng vào link ngắn.</p>`;
- if(n>5000)return`<h3>${I('link',17)}Mã ngắn</h3><p class="mu">Link của đề này dài ${n.toLocaleString('vi-VN')} ký tự, vượt giới hạn 5.000 ký tự của is.gd nên chưa tạo được mã ngắn. Bạn vẫn chia sẻ bằng mã dài hoặc link như bình thường.</p>`;
- return`<h3>${I('link',17)}Tạo mã ngắn</h3><p class="mu">Đặt một cái tên dễ nhớ để học sinh gõ thay cho mã dài: chữ thường không dấu, số và dấu gạch dưới, dài 5–30 ký tự. Miễn phí, không cần tài khoản.</p><div class="scr"><label class="sci"><span>is.gd/</span><input id="sci-${x.id}" maxlength="40" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(SCV[x.id]??(SCV[x.id]=sug(x.title)))}" aria-label="Tên mã ngắn"></label><button class="b p sm2" data-a="scg" data-id="${x.id}">${I('spark',16)}<span>Tạo mã ngắn</span></button></div>${SCE[x.id]?`<div class="er" role="alert"><div>${I('warn',16)}<span>${esc(SCE[x.id])}</span></div></div>`:''}`}
+const MP='EXAMP.',sleep=ms=>new Promise(r=>setTimeout(r,ms)),igq=a=>jsonp(IG+'forward.php?format=json&shorturl='+encodeURIComponent(a)),igc=u=>String(u).replace(/^https?:\/\/(?:www\.)?is\.gd\//i,'').replace(/\/$/,'');
+/* Đề dài hơn 5.000 ký tự: chia thành nhiều link is.gd tên_mã, tên_mã_2, tên_mã_3…; học sinh vẫn chỉ gõ một mã */
+function mpSplit(code,al){const base=LK(''),body=code.slice(PFX.length),cs=4990-(base.length+MP.length+7+al.length),n=Math.ceil(body.length/cs);if(cs<500||n>25)return null;return Array.from({length:n},(_,i)=>base+MP+(i+1)+'.'+n+'.'+al+'.'+body.slice(i*cs,(i+1)*cs))}
+function mpParse(s){s=String(s);const i=s.indexOf(MP);if(i<0)return null;const m=s.slice(i+MP.length).match(/^(\d{1,2})\.(\d{1,2})\.([a-z0-9_]{1,30})\.([A-Za-z0-9_-]+)/);return m?{k:+m[1],n:+m[2],al:m[3],c:m[4]}:null}
+function scUI(x){const n=LK(x.code).length,np=n>5000?(mpSplit(x.code,'x'.repeat(27))||{length:99}).length:1;
+ if(x.sc)return`<h3>${I('link',17)}Mã ngắn</h3><div class="scv"><span>is.gd/</span><b>${esc(x.sc)}</b></div><div class="acts"><button class="b p sm2" data-a="scc" data-id="${x.id}">${I('copy',16)}<span>Copy mã ngắn</span></button><button class="b sm2" data-a="scl" data-id="${x.id}">${I('link',16)}<span>Copy link ngắn</span></button></div><p class="mu">Học sinh gõ <b>${esc(x.sc)}</b> ở mục Giải đề, hoặc bấm thẳng vào link ngắn.${x.sp>1?` Đề được lưu thành ${x.sp} phần trên is.gd, web tự ghép lại khi mở.`:''}</p>`;
+ if(np>25)return`<h3>${I('link',17)}Mã ngắn</h3><p class="mu">Đề này dài ${n.toLocaleString('vi-VN')} ký tự, cần hơn 25 phần trên is.gd nên chưa tạo được mã ngắn. Bạn vẫn chia sẻ bằng mã dài hoặc link như bình thường.</p>`;
+ return`<h3>${I('link',17)}Tạo mã ngắn</h3><p class="mu">Đặt một cái tên dễ nhớ để học sinh gõ thay cho mã dài: chữ thường không dấu, số và dấu gạch dưới, dài 5–${np>1?30-1-String(np).length:30} ký tự. Miễn phí, không cần tài khoản.${np>1?` Đề này dài ${n.toLocaleString('vi-VN')} ký tự, vượt giới hạn 5.000 ký tự của một link is.gd, nên web sẽ tự chia thành <b>${np} phần</b>. Học sinh vẫn chỉ cần gõ một mã.`:''}</p><div class="scr"><label class="sci"><span>is.gd/</span><input id="sci-${x.id}" maxlength="40" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(SCV[x.id]??(SCV[x.id]=sug(x.title)))}" aria-label="Tên mã ngắn"></label><button class="b p sm2" data-a="scg" data-id="${x.id}">${I('spark',16)}<span>Tạo mã ngắn</span></button></div>${SCE[x.id]?`<div class="er" role="alert"><div>${I('warn',16)}<span>${esc(SCE[x.id])}</span></div></div>`:''}`}
 async function mkShort(id,btn){const x=scGet(id);if(!x||x.sc)return;const inp=$('#sci-'+id),al=nrm(inp?inp.value:SCV[id]).toLowerCase();if(inp)inp.value=al;SCV[id]=al;
- const fail=m=>{SCE[id]=m;SFX.er();scR(id)};
- if(!/^[A-Za-z0-9_]{5,30}$/.test(al))return fail('Tên mã ngắn cần dài 5–30 ký tự, chỉ gồm chữ không dấu, số và dấu gạch dưới.');
- const long=LK(x.code);if(long.length>5000)return fail('Link của đề vượt giới hạn 5.000 ký tự của is.gd.');
- if(btn){btn.disabled=true;btn.innerHTML='<i class="spn"></i><span>Đang tạo…</span>'}
- try{const d=await jsonp(IG+'create.php?format=json&url='+encodeURIComponent(long)+'&shorturl='+al);
-  if(d&&d.shorturl){const sc=String(d.shorturl).replace(/^https?:\/\/(?:www\.)?is\.gd\//i,'').replace(/\/$/,''),a=ld(),e=a.find(z=>z.id===id);x.sc=sc;if(e){e.sc=sc;sv(a)}delete SCE[id];SFX.link();toast('Đã tạo mã ngắn '+sc,'ok');return V==='mine'?R():scR(id)}
-  const c=d&&d.errorcode;fail(c===2?'Tên này đã có người dùng. Hãy đặt tên khác, ví dụ thêm vài con số ở cuối.':c===3?'Bạn tạo mã hơi nhanh, hãy đợi khoảng 1 phút rồi thử lại.':c===1?'is.gd không nhận link của đề này. Hãy mở web từ địa chỉ trên GitHub rồi thử lại.':'Dịch vụ is.gd đang bận hoặc bảo trì, hãy thử lại sau.')}
+ const fail=m=>{SCE[id]=m;SFX.er();scR(id)},bt=t=>{if(btn&&btn.isConnected){btn.disabled=true;btn.innerHTML='<i class="spn"></i><span>'+t+'</span>'}};
+ const why=(c,a)=>c===2?`Tên “${a}” đã có người dùng. Hãy đặt tên khác, ví dụ thêm vài con số ở cuối.`:c===3?'Bạn tạo mã hơi nhanh, hãy đợi khoảng 1 phút rồi thử lại.':c===1?'is.gd không nhận link của đề này. Hãy mở web từ địa chỉ trên GitHub rồi thử lại.':'Dịch vụ is.gd đang bận hoặc bảo trì, hãy thử lại sau.';
+ const long=LK(x.code),P=long.length>5000?mpSplit(x.code,al||'x'):[long];
+ if(!P)return fail('Đề quá dài, cần hơn 25 phần trên is.gd nên chưa tạo được mã ngắn.');
+ const n=P.length,mx=n>1?30-1-String(n).length:30;
+ if(!/^[a-z0-9_]+$/.test(al)||al.length<5||al.length>mx)return fail(`Tên mã ngắn cần dài 5–${mx} ký tự, chỉ gồm chữ không dấu, số và dấu gạch dưới.`);
+ try{if(n>1){bt('Đang kiểm tra tên…');const e=await igq(al);if(e&&e.url)return fail(why(2,al))}
+  let sc=al;
+  for(let k=n;k>=1;k--){const a2=k===1?al:al+'_'+k;bt(n>1?`Đang tạo phần ${n-k+1}/${n}…`:'Đang tạo…');
+   const d=await jsonp(IG+'create.php?format=json&url='+encodeURIComponent(P[k-1])+'&shorturl='+a2);
+   if(!(d&&d.shorturl))return fail(why(d&&d.errorcode,a2));
+   const got=igc(d.shorturl);if(k>1&&got!==a2)return fail('is.gd trả về mã khác dự kiến, hãy thử lại với tên khác.');
+   if(k===1)sc=got;else await sleep(200)}
+  const a=ld(),e=a.find(z=>z.id===id);x.sc=sc;x.sp=n;if(e){e.sc=sc;e.sp=n;sv(a)}delete SCE[id];SFX.link();toast('Đã tạo mã ngắn '+sc+(n>1?` (${n} phần)`:''),'ok');return V==='mine'?R():scR(id)}
  catch(e){fail('Không kết nối được tới is.gd. Hãy kiểm tra mạng rồi thử lại.')}}
+async function openMP(p,btn){btn=btn||$('[data-a=load]');const bt=t=>{if(btn&&btn.isConnected){btn.disabled=true;btn.innerHTML='<i class="spn"></i><span>'+t+'</span>'}};
+ const P=[];P[p.k]=p.c;
+ try{for(let k=1;k<=p.n;k++){if(P[k])continue;bt(`Đang tải phần ${k}/${p.n}…`);
+   const d=await igq(k===1?p.al:p.al+'_'+k),q=d&&d.url?mpParse(d.url):null;
+   if(!q||q.k!==k||q.n!==p.n||q.al!==p.al){ERR=d&&d.errorcode===3?'Đang có quá nhiều lượt mở đề, hãy thử lại sau ít phút.':`Không tải đủ các phần của đề (thiếu phần ${k}/${p.n}). Hãy thử lại sau.`;SFX.er();return R()}
+   P[k]=q.c}
+  return openCode(PFX+P.slice(1).join(''),1)}
+ catch(e){ERR='Không kết nối được tới is.gd để tải đề. Hãy kiểm tra mạng, hoặc dùng mã dài.';SFX.er();R()}}
 async function openAny(raw,btn){const s=String(raw||'').trim(),k=s.indexOf(PFX);
  if(!s){ERR='Bạn chưa nhập mã đề.';SFX.er();return R()}
  if(k>=0)return openCode(s.slice(k),1);
+ const mp=mpParse(s);if(mp)return openMP(mp,btn);
  const m=s.match(/^(?:https?:\/\/)?(?:www\.)?(?:is\.gd\/)?([A-Za-z0-9_]{1,30})\/?$/i);
  if(!m){ERR='Không nhận ra mã này. Hãy dán mã đề bắt đầu bằng “'+PFX+'”, hoặc gõ đúng mã ngắn giáo viên gửi.';SFX.er();return R()}
  btn=btn||$('[data-a=load]');if(btn){btn.disabled=true;btn.innerHTML='<i class="spn"></i><span>Đang tìm đề…</span>'}SFX.srch();
- const q=a=>jsonp(IG+'forward.php?format=json&shorturl='+encodeURIComponent(a));
- try{let d=await q(m[1]);if(!(d&&d.url)&&m[1]!==m[1].toLowerCase())d=await q(m[1].toLowerCase());
+ try{let d=await igq(m[1]);if(!(d&&d.url)&&m[1]!==m[1].toLowerCase())d=await igq(m[1].toLowerCase());
   if(d&&d.url){let u=String(d.url),i=u.indexOf(PFX);if(i<0){try{u=decodeURIComponent(u);i=u.indexOf(PFX)}catch(_){}}
-   if(i>=0)return openCode(u.slice(i),1);ERR='Mã ngắn này không trỏ tới đề thi nào trên web.'}
+   if(i>=0)return openCode(u.slice(i),1);const q=mpParse(u);if(q)return openMP(q,btn);ERR='Mã ngắn này không trỏ tới đề thi nào trên web.'}
   else ERR=d&&d.errorcode===3?'Đang có quá nhiều lượt mở đề, hãy thử lại sau ít phút.':d&&d.errorcode===4?'Dịch vụ is.gd đang bận, hãy thử lại sau hoặc dùng mã dài.':`Không tìm thấy mã ngắn “${m[1]}”. Hãy kiểm tra lại chính tả.`}
  catch(e){ERR='Không kết nối được tới is.gd để mở mã ngắn. Hãy kiểm tra mạng, hoặc dùng mã dài.'}
  SFX.er();R()}
@@ -852,7 +871,7 @@ const MRG='<svg width="0" height="0" style="position:absolute" aria-hidden="true
 const mr=x=>{const p=Math.max(0,Math.min(1,(x||0)/10)),C=2*Math.PI*18;return`<div class="mr" title="Cao nhất ${fs10(x)}/10"><svg viewBox="0 0 44 44" width="46" height="46" aria-hidden="true"><circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" stroke-opacity=".12" stroke-width="5"/>${p?`<circle cx="22" cy="22" r="18" fill="none" stroke="url(#mrg)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C*(1-p)).toFixed(2)}"/>`:''}</svg><b>${fs10(x)}</b></div>`};
 const Mn=()=>{const dn=TAB==='done',a=ld(dn?KD:KEY);
  return`<div class="pt"><h2>Thư viện đề</h2></div>${SG()}<p class="mu lib">${dn?'Các đề bạn đã nhập mã ở mục Giải đề tự động được lưu tại đây, kèm điểm các lần làm. Dữ liệu chỉ nằm <b>cục bộ</b> trên thiết bị này; đổi thiết bị hoặc trình duyệt sẽ không tự đồng bộ.':'Các đề bạn tạo được lưu <b>cục bộ</b> trên thiết bị này; đổi thiết bị hoặc trình duyệt sẽ không tự đồng bộ, hãy giữ lại mã đề để chia sẻ.'}</p>${MRG}
- ${a.length?a.map(x=>`<div class="g it"><div class="ith"><div class="itt"><b>${esc(x.title)}</b><div class="mu">${new Date(x.date).toLocaleDateString('vi-VN')}, ${x.n} câu.${dn?(x.tries?` Đã làm ${x.tries} lần · Gần nhất ${fs10(x.last)}/10 · Cao nhất ${fs10(x.best)}/10.`:' Chưa hoàn thành lần nào.'):''}</div></div>${dn&&x.best!=null?mr(x.best):''}</div><div class="cdx"><code>${esc(x.code.slice(0,24))}…</code></div>${!dn&&x.sc?`<div class="scm">${I('link',15)}<span>Mã ngắn:</span><code>${esc(x.sc)}</code></div>`:''}${FB(x)}
+ ${a.length?a.map(x=>`<div class="g it"><div class="ith"><div class="itt"><b>${esc(x.title)}</b><div class="mu">${new Date(x.date).toLocaleDateString('vi-VN')}, ${x.n} câu.${dn?(x.tries?` Đã làm ${x.tries} lần · Gần nhất ${fs10(x.last)}/10 · Cao nhất ${fs10(x.best)}/10.`:' Chưa hoàn thành lần nào.'):''}</div></div>${dn&&x.best!=null?mr(x.best):''}</div><div class="cdx"><code>${esc(x.code.slice(0,24))}…</code></div>${!dn&&x.sc?`<div class="scm">${I('link',15)}<span>Mã ngắn:</span><code>${esc(x.sc)}</code>${x.sp>1?`<span>(${x.sp} phần)</span>`:''}</div>`:''}${FB(x)}
  <div class="acts"><button class="b p sm2" data-a="${dn?'redo2':'open'}" data-id="${x.id}">${I(dn?'retry':'play',16)}<span>${dn?'Làm lại':'Mở'}</span></button><button class="b sm2" data-a="cpid" data-id="${x.id}">${I('copy',16)}<span>Copy mã</span></button><button class="b sm2" data-a="lkid" data-id="${x.id}">${I('link',16)}<span>Copy link</span></button>${dn?'':x.sc?`<button class="b sm2" data-a="scc" data-id="${x.id}">${I('copy',16)}<span>Copy mã ngắn</span></button>`:`<button class="b sm2" data-a="sco" data-id="${x.id}" aria-expanded="${SCO.has(x.id)}">${I('spark',16)}<span>Mã ngắn</span></button>`}${dn?'':`<button class="b sm2" data-a="edit" data-id="${x.id}">${I('pen',16)}<span>Sửa</span></button>`}<button class="b sm2 dg${DEL===x.id?' on':''}" data-a="del" data-id="${x.id}">${I('trash',16)}<span>${DEL===x.id?'Bấm lại để xóa':'Xóa'}</span></button></div>${!dn&&!x.sc&&SCO.has(x.id)?`<div class="scx" id="scx-${x.id}">${scUI(x)}</div>`:''}</div>`).join('')
  :`<div class="g emp">${I(dn?'tray':'doc',30,1.7)}<p>${dn?'Chưa có đề nào. Nhập mã ở mục Giải đề, đề sẽ tự được lưu vào đây.':'Chưa có đề nào. Hãy tạo đề đầu tiên của bạn.'}</p><button class="b p" data-a="${dn?'join':'create'}">${I(dn?'playc':'pen',17)}<span>${dn?'Giải đề':'Tạo đề'}</span></button></div>`}`};
 
@@ -1049,5 +1068,5 @@ try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if
 try{Object.assign(DRAFT,JSON.parse(localStorage.getItem('sx:draft'))||{})}catch(e){}
 setInterval(()=>{const e=$('#lt');if(e&&G)e.textContent=mmss(((G.t1||Date.now())-G.t0)/1000)},1000);
 applyTh();draw(1,0);
-try{const h=decodeURIComponent(location.hash.slice(1));if(h.startsWith(PFX)){try{history.replaceState(null,'',location.href.split('#')[0])}catch(e){}openCode(h,1)}}catch(e){}
+try{const h=decodeURIComponent(location.hash.slice(1));if(h.startsWith(PFX)){try{history.replaceState(null,'',location.href.split('#')[0])}catch(e){}openCode(h,1)}else if(h.startsWith(MP)){const q=mpParse(h);try{history.replaceState(null,'',location.href.split('#')[0])}catch(e){}if(q){V='join';draw(0,0);openMP(q)}}}catch(e){}
 </script></body></html>
