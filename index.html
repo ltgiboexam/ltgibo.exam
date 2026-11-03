@@ -620,11 +620,11 @@ html.lite .tls.fin::after,html.lite .tls.cur .tln,html.lite .ra{animation:none}
 .rch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .rch b{font-size:17px;letter-spacing:-.015em}
 .rcx{display:inline-flex;align-items:center;gap:2px;font-size:14px;font-weight:600;color:var(--ac)}
-.qst{display:flex;gap:6px}
-.qsp{display:flex;gap:2px;min-width:0}
-.qsp i{flex:1;min-width:0;height:10px;border-radius:3px;background:color-mix(in srgb,var(--tx) 12%,transparent)}
-.qsp i.ok,.rlg i.ok{background:var(--okf)}.qsp i.bad,.rlg i.bad{background:var(--badf)}.qsp i.ptl,.rlg i.ptl{background:#ff9f0a}
-.qst.dense .qsp{gap:0;overflow:hidden;border-radius:4px}.qst.dense .qsp i{border-radius:0}
+.qst{display:flex;height:10px;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--tx) 12%,transparent);animation:qsr 1s var(--ease) both}
+@keyframes qsr{from{clip-path:inset(0 100% 0 0 round 99px)}to{clip-path:inset(0 0 0 0 round 99px)}}
+.qst i{min-width:4px;background:color-mix(in srgb,var(--tx) 12%,transparent)}
+.qst i.ok,.rlg i.ok{background:var(--okf)}.qst i.bad,.rlg i.bad{background:var(--badf)}.qst i.ptl,.rlg i.ptl{background:#ff9f0a}
+html.lite .qst{animation:none}
 .rlg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12.5px;color:var(--mu)}
 .rlg span{display:inline-flex;align-items:center;gap:6px}
 .rlg i{width:8px;height:8px;border-radius:3px;background:color-mix(in srgb,var(--tx) 12%,transparent)}
@@ -1085,7 +1085,7 @@ function Rs(){
  ${T?`<div class="g pcp"><div class="pch"><b>Điểm từng phần</b><span class="tg2">THPT 2025</span></div>${T.ps.map(p=>`<div class="pcr"><div class="pcl"><span class="pk"><i class="d ${p.y}"></i>Phần ${PT[p.y][0]} · ${PT[p.y][1]}</span><small>${p.ok}/${p.n} ${p.y==='t'?'đủ 4 ý':'đúng'}</small><b>${fmP(p.pts*K)}<small>/${fmP(p.max*K)}</small></b></div><div class="pbar"><i style="width:${p.max?p.pts/p.max*100:0}%"></i></div></div>`).join('')}</div>`:''}
  ${G.rd?`<div class="g"><div class="rh"><h2>Từng câu</h2><button class="b sm2" data-a="rd">Thu gọn</button></div>${G.it.map(RW).join('')}</div>`:`<button class="g rcl" data-a="rd" aria-expanded="false"><span class="rch"><b>Từng câu</b><span class="rcx">Xem chi tiết${I('chevR',16,2.4)}</span></span>${qstrip()}<span class="rlg"><span><i class="ok"></i>${ok} đúng</span>${npt?`<span><i class="ptl"></i>${npt} đúng một phần</span>`:''}<span><i class="bad"></i>${bad-npt} sai</span><span><i></i>${sk} chưa làm</span></span></button>`}
  <div class="acts"><button class="b p" data-a="review">${I('eye',17)}<span>Xem lại đáp án</span></button>${bad+sk?`<button class="b" data-a="redo">${I('retry',17)}<span>Làm lại các câu sai</span></button>`:''}${G.it.some(x=>x.f)?`<button class="b" data-a="redof">${I('flag',17)}<span>Làm lại câu đã đánh dấu</span></button>`:''}<button class="b" data-a="again">${I('retry',17)}<span>Làm lại toàn bộ</span></button><button class="b" data-a="shr">${I('share',17)}<span>Chia sẻ điểm</span></button></div>`}
-const qstrip=()=>{const grp=G.sp?G.parts.map(p=>G.it.slice(p.s,p.e+1)):[G.it];return`<span class="qst${G.it.length>80?' dense':''}" aria-hidden="true">${grp.map(g=>`<span class="qsp" style="flex:${g.length}">${g.map(t=>`<i class="${pcc(t).trim()}"></i>`).join('')}</span>`).join('')}</span>`};
+const qstrip=()=>{const c={ok:0,ptl:0,bad:0,'':0};G.it.forEach(t=>c[pcc(t).trim()]++);return`<span class="qst" aria-hidden="true">${['ok','ptl','bad',''].filter(k=>c[k]).map(k=>`<i class="${k}" style="flex:${c[k]}"></i>`).join('')}</span>`};
 const RW=(t,i)=>{const q=t.q,d=done(t),g=d&&good(t),pp=G.sp&&q.y==='t'&&d&&!g&&tfOk(t)>0;let x;
  if(q.y==='m'){const ci=t.ord.indexOf(q.c);x=(d&&!g?`Bạn chọn ${L[t.a]}. ${fm(q.o[t.ord[t.a]])}<br>`:'')+`Đáp án ${L[ci]}. ${fm(q.o[q.c])}`}
  else if(q.y==='s')x=(d&&!g?`Bạn trả lời ${esc(t.v)}<br>`:'')+`Đáp án ${q.c.map(nd).join(' hoặc ')}`;
