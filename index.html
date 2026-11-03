@@ -757,12 +757,33 @@ async function cpy(s,m,btn){let ok=1;try{await navigator.clipboard.writeText(s)}
 const b64=u=>{let s='';for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode(...u.subarray(i,i+8192));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
 const unb=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');s+='==='.slice((s.length+3)%4);return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
 const pipe=async(u,S)=>new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new S('deflate-raw'))).arrayBuffer());
+/* Giải nén deflate-raw thuần JavaScript (RFC 1951): dùng khi trình duyệt cũ không có DecompressionStream (VD iOS < 16.4, WebView cũ) */
+const LB=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258],LE=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0],
+ DB=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577],DE=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13],CLO=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
+function infl(d){let i=0,b=0,n=0,o=new Uint8Array(Math.max(4096,d.length*4)),op=0,last;
+ const bits=k=>{while(n<k){if(i>=d.length)throw Error('eof');b|=d[i++]<<n;n+=8}const v=b&((1<<k)-1);b>>>=k;n-=k;return v};
+ const put=x=>{if(op>=o.length){const t=new Uint8Array(o.length*2);t.set(o);o=t}o[op++]=x};
+ const mk=L=>{const c=new Uint16Array(16),f=new Uint16Array(16),s=new Uint16Array(L.length);for(let k=0;k<L.length;k++)c[L[k]]++;c[0]=0;for(let k=1;k<16;k++)f[k]=f[k-1]+c[k-1];for(let k=0;k<L.length;k++)if(L[k])s[f[L[k]]++]=k;return{c,s}};
+ const dec=h=>{let code=0,first=0,idx=0;for(let l=1;l<16;l++){code|=bits(1);const c=h.c[l];if(code-first<c)return h.s[idx+code-first];idx+=c;first=(first+c)<<1;code<<=1}throw Error('bad code')};
+ let FL=null,FD=null;
+ do{last=bits(1);const ty=bits(2);
+  if(ty===0){b=0;n=0;if(i+4>d.length)throw Error('eof');const len=d[i]|d[i+1]<<8;i+=4;if(i+len>d.length)throw Error('eof');for(let k=0;k<len;k++)put(d[i++])}
+  else if(ty===1||ty===2){let lt,dt;
+   if(ty===1){if(!FL){const L=new Uint8Array(288);L.fill(8,0,144);L.fill(9,144,256);L.fill(7,256,280);L.fill(8,280,288);FL=mk(L);FD=mk(new Uint8Array(30).fill(5))}lt=FL;dt=FD}
+   else{const hl=bits(5)+257,hd=bits(5)+1,hc=bits(4)+4,cl=new Uint8Array(19);for(let k=0;k<hc;k++)cl[CLO[k]]=bits(3);
+    const ch=mk(cl),L=new Uint8Array(hl+hd);let k=0;
+    while(k<hl+hd){const sy=dec(ch);if(sy<16)L[k++]=sy;else{let r,v=0;if(sy===16){if(!k)throw Error('bad');v=L[k-1];r=3+bits(2)}else if(sy===17)r=3+bits(3);else r=11+bits(7);if(k+r>hl+hd)throw Error('bad');while(r--)L[k++]=v}}
+    lt=mk(L.subarray(0,hl));dt=mk(L.subarray(hl))}
+   for(;;){const sy=dec(lt);if(sy<256)put(sy);else if(sy===256)break;else{const a=sy-257;if(a>28)throw Error('bad');const len=LB[a]+bits(LE[a]),di=dec(dt);if(di>29)throw Error('bad');const dist=DB[di]+bits(DE[di]);if(dist>op)throw Error('bad dist');for(let k=0;k<len;k++)put(o[op-dist])}}}
+  else throw Error('bad block')}while(!last);
+ return o.subarray(0,op)}
+const inflate=async p=>{if(typeof DecompressionStream!=='undefined'){try{return await pipe(p,DecompressionStream)}catch(e){}}return infl(p)};
 async function encode(ex){
  const raw=new TextEncoder().encode(JSON.stringify(ex));let f=0,p=raw;
  try{p=await pipe(raw,CompressionStream);f=1}catch(e){p=raw;f=0}
  const o=new Uint8Array(p.length+1);o[0]=f;o.set(p,1);return PFX+b64(o)}
 function chk(o){
- if(!o||o.v!==1||!Array.isArray(o.q)||!o.q.length||o.q.length>500)throw Error('x');
+ if(!o||o.v!==1||!Array.isArray(o.q)||!o.q.length||o.q.length>2000)throw Error('x');
  o.q.forEach(q=>{if(!(q&&typeof q.s==='string'&&(q.y==='s'?Array.isArray(q.c)&&q.c.length>0&&q.c.length<=20&&q.c.every(x=>typeof x==='number'&&isFinite(x)):(q.y==='m'||q.y==='t')&&Array.isArray(q.o)&&q.o.length===4&&q.o.every(x=>typeof x==='string')&&(q.y==='m'?[0,1,2,3].includes(q.c):Array.isArray(q.c)&&q.c.length===4&&q.c.every(x=>x===0||x===1)))))throw Error('x')});
  return{v:1,t:String(o.t||'Đề thi').slice(0,200),d:String(o.d||'').slice(0,1000),q:o.q}}
 async function decode(c){
@@ -770,7 +791,7 @@ async function decode(c){
  if(!c)throw Error('Bạn chưa dán mã đề.');
  if(!c.startsWith(PFX))throw Error('Mã đề phải bắt đầu bằng “'+PFX+'”. Hãy copy đủ cả mã.');
  try{const u=unb(c.slice(PFX.length)),p=u.slice(1);
-  return chk(JSON.parse(new TextDecoder().decode(u[0]===1?await pipe(p,DecompressionStream):p)))
+  return chk(JSON.parse(new TextDecoder().decode(u[0]===1?await inflate(p):p)))
  }catch(e){throw Error('Mã đề bị lỗi hoặc bị cắt thiếu. Hãy copy lại toàn bộ mã.')}}
 
 /* ---------- Số thực cho câu trả lời ngắn ---------- */
@@ -959,14 +980,14 @@ const Cr=()=>`<div class="pt"><h2>${ED?'Sửa đề':'Tạo đề'}</h2><p class
 <div class="ed${IOS?' ios':''}"><pre class="hlc" id="hl" aria-hidden="true">${hlx(DRAFT.s)}</pre><textarea id="sr" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="Question 1: ...">${esc(DRAFT.s)}</textarea></div>
 <details class="dz"><summary>${I('info',16)}<span>Cú pháp các dạng câu</span></summary><div class="dzb">${SYN()}</div></details><div class="aip"><i class="aii">${I('spark',20,2)}</i><div class="ait"><b>Chuyển đề có sẵn bằng AI</b>Có đề Word, PDF hay ảnh kèm đáp án? Copy prompt này, gửi kèm file cho AI (ChatGPT, Claude, Gemini…) rồi dán kết quả vào ô trên.</div><button class="b p sm2" data-a="aip">${I('copy',16)}<span>Copy prompt</span></button></div></div>
 <div id="pv"></div><div id="cd"></div>`;
-function pv(){const e=$('#pv');if(!e)return;const{qs,errs}=parse(DRAFT.s);
+function pv(){const e=$('#pv');if(!e)return;const{qs,errs}=parse(DRAFT.s);if(qs.length>2000)errs.unshift(`Đề có ${qs.length.toLocaleString('vi-VN')} câu, vượt giới hạn 2.000 câu. Hãy chia thành nhiều đề nhỏ hơn.`);
  e.innerHTML=!DRAFT.s.trim()?'':`<div class="g"><div class="pvh"><h2>Xem trước</h2><span class="cnt">${qs.length} câu</span></div>${qs.length?tyc(qs):''}${errs.length?`<div class="er" role="alert">${errs.map(x=>`<div>${I('warn',16)}<span>${esc(x)}</span></div>`).join('')}</div>`:`<div class="okm">${I('check',16,2.6)}Không có lỗi</div>`}
  ${qs.slice(0,PVA?qs.length:60).map((q,i)=>`<div class="pq"><div class="qn"><span class="tg ${q.y}">${TYN[q.y]}</span><b>Câu ${i+1}</b></div><div class="pqs">${fm(q.s)}</div>${q.y==='s'?`<div class="mu ck">Đáp án: ${q.c.map(nd).join(' hoặc ')}</div>`:q.o.map((o,j)=>{const r=q.y==='m'?q.c===j:q.c[j];return`<div class="mu${r?' ck':''}">${L[j]}. ${fm(o)}${q.y==='m'?(r?' ✓':''):(r?' — Đúng':' — Sai')}</div>`}).join('')}</div>`).join('')}${qs.length>60&&!PVA?`<div class="pvm"><span class="mu">Đang hiển thị 60/${qs.length} câu cho nhẹ máy. Tất cả các câu vẫn đã được kiểm tra lỗi.</span><button class="b sm2" data-a="pva">Hiện tất cả</button></div>`:''}
  <button class="b p xl" data-a="make" ${errs.length||!qs.length?'disabled':''}>${I('spark',18)}<span>Tạo mã đề</span></button></div>`}
 function scr(el,txt){if(!el||RM()||LITE())return;const N=Math.min(txt.length,260),A='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_',t0=performance.now();
  const f=t=>{if(!el.isConnected)return;const k=Math.min(1,(t-t0)/850),m=Math.floor(N*k);let s=txt.slice(0,m);for(let i=m;i<N;i++)s+=A[Math.random()*64|0];el.value=s+txt.slice(N);if(k<1)requestAnimationFrame(f);else el.value=txt};requestAnimationFrame(f)}
 async function make(){
- const{qs,errs}=parse(DRAFT.s);if(errs.length||!qs.length)return;
+ const{qs,errs}=parse(DRAFT.s);if(errs.length||!qs.length||qs.length>2000)return;
  const ex={v:1,t:DRAFT.t.trim()||'Đề không tên',d:DRAFT.d.trim(),q:qs};
  CODE=await encode(ex);EX=ex;CUR='';FID='';EC=CODE;SFX.make();
  const nid=ED||Date.now().toString(36),a=ld().filter(x=>x.id!==ED);a.unshift({id:nid,title:ex.t,date:Date.now(),n:qs.length,code:CODE});SCT[nid]={id:nid,code:CODE,title:ex.t};delete SCE[nid];delete SCV[nid];
