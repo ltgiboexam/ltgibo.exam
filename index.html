@@ -637,12 +637,17 @@ html.lite .qst{animation:none}
 .pcl>small{flex:1;min-width:0;overflow:hidden;font-size:12px;color:var(--mu);white-space:nowrap;text-overflow:ellipsis}
 .pcl>b{font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}.pcl>b small{font-size:12px;font-weight:500;color:var(--mu)}
 .pcr .pbar{height:5px;margin:0}
-.qgh{position:fixed;z-index:4;margin:0!important;pointer-events:none;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:linear-gradient(180deg,var(--gl2),var(--gl))}
-.qgh.qgn{animation:qol .32s cubic-bezier(.4,0,.6,1) both}.qgh.qgp{animation:qor .32s cubic-bezier(.4,0,.6,1) both}
-.qc.qin{animation:qir .5s cubic-bezier(.2,.85,.25,1) both}.qc.qip{animation:qil .5s cubic-bezier(.2,.85,.25,1) both}
 .view.sft>:not(.seg){animation:vtf .22s ease both}
-.qc.qsn{animation:qsn .42s cubic-bezier(.2,.85,.25,1) both}.qc.qsp{animation:qsp .42s cubic-bezier(.2,.85,.25,1) both}
-@keyframes qsn{from{opacity:0;transform:translateX(10%)}}@keyframes qsp{from{opacity:0;transform:translateX(-10%)}}
+.qx{position:absolute;inset:0;z-index:2;padding:inherit;overflow:hidden;border-radius:inherit;pointer-events:none;will-change:transform,opacity}
+.qx.qxn{animation:qxn .15s cubic-bezier(.4,0,1,1) both}.qx.qxp{animation:qxp .15s cubic-bezier(.4,0,1,1) both}
+@keyframes qxn{to{opacity:0;transform:translate3d(-18px,0,0)}}@keyframes qxp{to{opacity:0;transform:translate3d(18px,0,0)}}
+.qc.qt-n{--dx:24px}.qc.qt-p{--dx:-24px}
+.qc.qt-n>:not(.qx),.qc.qt-p>:not(.qx){animation:qxi .36s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(55ms + var(--i,0)*30ms)}
+@keyframes qxi{from{opacity:0;transform:translate3d(var(--dx),0,0)}}
+.qc>:nth-child(2){--i:1}.qc>:nth-child(3){--i:2}.qc>:nth-child(4){--i:3}.qc>:nth-child(5){--i:4}.qc>:nth-child(6){--i:5}.qc>:nth-child(7){--i:6}.qc>:nth-child(n+8){--i:7}
+.pn.cn-n b{animation:pnr .34s cubic-bezier(.2,.8,.2,1) backwards}.pn.cn-p b{animation:pnp .34s cubic-bezier(.2,.8,.2,1) backwards}
+.pn b{display:inline-block}
+@keyframes pnr{from{opacity:0;transform:translate3d(0,9px,0)}}@keyframes pnp{from{opacity:0;transform:translate3d(0,-9px,0)}}
 @media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
 </style></head><body>
 <div class="au" aria-hidden="true"><i></i><i></i><i></i></div><div class="grain"></div><div id="app"></div><div id="t" role="status" aria-live="polite"></div><div id="sk" role="status" aria-live="polite"></div>
@@ -1183,21 +1188,32 @@ function share(el){const n=G.it.length,ok=G.it.filter(x=>done(x)&&good(x)).lengt
  if(navigator.share&&matchMedia('(pointer:coarse)').matches)navigator.share({title:EX.t,text:txt}).then(()=>SFX.cp()).catch(()=>{});else cpy(txt,'Đã sao chép',el)}
 
 /* ---------- Hiển thị (View Transitions khi trình duyệt hỗ trợ) ---------- */
-const TOP=()=>`<header class="top"><button class="brand" data-a="home" aria-label="ltgiBo.exam, về trang chủ">${LOGO}<span>ltgiBo<i>.exam</i></span></button><nav class="tr">${V!=='home'?`<button class="b ib2" data-a="home" aria-label="Trang chủ">${I('home',18,2.2)}<span>Trang chủ</span></button>`:''}<button class="b sb${PMO?' on':''}" data-a="pm" aria-label="Chế độ hiệu năng" aria-haspopup="menu" aria-expanded="${!!PMO}">${I('gauge',19)}</button><button class="b sb" data-a="thm" aria-label="Đổi giao diện sáng/tối">${isDark()?I('sun',19):I('moon',19)}</button><button class="b sb" data-a="snd" aria-label="${MUTE?'Bật':'Tắt'} âm thanh" aria-pressed="${!MUTE}">${MUTE?I('soff',19):I('son',19)}</button></nav>${PMO?PMU():''}</header>`;
+const TK=()=>[V!=='home',isDark(),MUTE,PMO,PM].join('|');
+const TOP=()=>`<header class="top" data-k="${TK()}"><button class="brand" data-a="home" aria-label="ltgiBo.exam, về trang chủ">${LOGO}<span>ltgiBo<i>.exam</i></span></button><nav class="tr">${V!=='home'?`<button class="b ib2" data-a="home" aria-label="Trang chủ">${I('home',18,2.2)}<span>Trang chủ</span></button>`:''}<button class="b sb${PMO?' on':''}" data-a="pm" aria-label="Chế độ hiệu năng" aria-haspopup="menu" aria-expanded="${!!PMO}">${I('gauge',19)}</button><button class="b sb" data-a="thm" aria-label="Đổi giao diện sáng/tối">${isDark()?I('sun',19):I('moon',19)}</button><button class="b sb" data-a="snd" aria-label="${MUTE?'Bật':'Tắt'} âm thanh" aria-pressed="${!MUTE}">${MUTE?I('soff',19):I('son',19)}</button></nav>${PMO?PMU():''}</header>`;
 const VIEWS={parts:Hb,home:Hm,create:Cr,mine:Mn,join:Jn,setup:Su,play:Pl,result:Rs};
-function qswap(a,d){document.querySelectorAll('.qgh').forEach(e=>e.remove());const old=$('.qc');
- if(old&&!RM()&&!LITE()){const r=old.getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight){const gh=old.cloneNode(true);gh.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));gh.classList.remove('qsn','qsp','qin','qip');gh.classList.add('qgh',d==='prev'?'qgp':'qgn');gh.setAttribute('aria-hidden','true');Object.assign(gh.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});document.body.appendChild(gh);setTimeout(()=>gh.remove(),420)}}
- draw(a,0,d)}
+/* Chuyển câu: thẻ kính đứng yên, nội dung cũ lướt ra, nội dung mới vào xếp tầng. Chỉ dùng transform + opacity nên nhẹ cho GPU */
+function qswap(a,d){const old=$('.qc');let gh=null;
+ if(old&&!RM()){gh=document.createElement('div');gh.className='qx '+(d==='prev'?'qxp':'qxn');gh.setAttribute('aria-hidden','true');gh.innerHTML=old.innerHTML;gh.querySelectorAll('.qx').forEach(e=>e.remove());gh.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));gh.querySelectorAll('[data-a]').forEach(e=>e.removeAttribute('data-a'))}
+ draw(a,0,d);const c=$('.qc');if(c&&gh){c.appendChild(gh);setTimeout(()=>gh.remove(),190)}}
 function R(a){const d=a===2?'soft':DIR;DIR='';
  if(a&&(d==='next'||d==='prev'))return qswap(a,d);
  if(a&&!NOVT&&!LITE()&&!WK&&document.startViewTransition&&!RM()){const h=document.documentElement,t0=performance.now();h.dataset.dir=d;h.classList.add('vt');VTN++;VB=1;
   try{const t=document.startViewTransition(()=>{VB=0;if(performance.now()-t0>280)NOVT=1;draw(a,1)}),cl=()=>{VB=0;if(--VTN<=0){VTN=0;h.classList.remove('vt')}};t.finished.then(cl,cl);t.ready.catch(()=>{});return}catch(e){VB=0;VTN=Math.max(0,VTN-1);h.classList.remove('vt')}}
  if(a===2&&!RM()){const si=$('.seg .si'),ox=si?si.getBoundingClientRect().left:null;draw(a,0,'soft');const v=$('.view');if(v)v.classList.add('sft');const n=$('.seg .si');if(n&&ox!=null){const dx=ox-n.getBoundingClientRect().left;if(Math.abs(dx)>1&&n.animate)n.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],{duration:450,easing:'cubic-bezier(.3,1.45,.45,1)'})}return}
  draw(a,0)}
+/* Màn làm bài: giữ nguyên các khung kính, chỉ thay nội dung bên trong (đỡ phải tạo lại lớp kính mờ mỗi lần đổi câu/chọn đáp án) */
+function morph(mv,html){const t=document.createElement('template');t.innerHTML=html;const nw=[...t.content.children],ol=[...mv.children],sig=e=>e.tagName+'.'+(e.classList[0]||'')+(e.classList[0]==='g'?'.'+(e.classList[1]||''):'');
+ if(nw.length!==ol.length||nw.some((n,i)=>sig(n)!==sig(ol[i])))return false;
+ nw.forEach((n,i)=>{const o=ol[i];for(const at of[...o.attributes])if(!n.hasAttribute(at.name))o.removeAttribute(at.name);for(const at of[...n.attributes])if(o.getAttribute(at.name)!==at.value)o.setAttribute(at.name,at.value);
+  if(o.classList.contains('chips')&&o.children.length===n.children.length&&[...n.children].every((c,k)=>c.tagName===o.children[k].tagName)){[...n.children].forEach((c,k)=>{const x=o.children[k];for(const at of[...x.attributes])if(!c.hasAttribute(at.name))x.removeAttribute(at.name);for(const at of[...c.attributes])if(x.getAttribute(at.name)!==at.value)x.setAttribute(at.name,at.value);if(x.innerHTML!==c.innerHTML)x.innerHTML=c.innerHTML})}
+  else if(o.innerHTML!==n.innerHTML)o.innerHTML=n.innerHTML});
+ mv.classList.remove('an','sft');return true}
 function draw(a,vt,qn){if(a===1){clr();document.querySelectorAll('.cf').forEach(e=>e.remove())}
- $('#app').innerHTML=TOP()+`<main class="view${a===1&&!vt&&!qn?' an':''}">${VIEWS[V]()}</main>`;
+ const html=VIEWS[V](),mv=$('main.view');
+ if(!vt&&V==='play'&&mv&&mv.dataset.v==='play'&&morph(mv,html)){const t=$('.top');if(t&&t.dataset.k!==TK())t.outerHTML=TOP()}
+ else $('#app').innerHTML=TOP()+`<main class="view${a===1&&!vt&&!qn?' an':''}" data-v="${V}">${html}</main>`;
  if(a===1)scrollTo(0,0);
- if(qn==='next'||qn==='prev'){const c=$('.qc');if(c)c.classList.add(LITE()?(qn==='prev'?'qsp':'qsn'):(qn==='prev'?'qip':'qin'))}
+ if(qn==='next'||qn==='prev'){const c=$('.qc'),n=$('.pn');if(c)c.classList.add(qn==='prev'?'qt-p':'qt-n');if(n)n.classList.add(qn==='prev'?'cn-p':'cn-n')}
  if(V==='play'){const b=$('.bar i');if(b){b.offsetWidth;b.style.width=b.dataset.w+'%';G.lp=b.dataset.w/100}saF()}
  if(V!=='play'){const k=$('#sk');if(k)k.classList.remove('on')}if(V==='create')pv();
  if(V==='result'){if(a===1){const first=!G.cf;if(first){G.cf=1;edge();SFX.rev()}cu(first)}else{const s=$('.hs');if(s)s.classList.add('still')}
